@@ -1,4 +1,4 @@
-# text-alert
+# dc-texter
 
 > Send an SMS text alert using Python and Gmail
 
@@ -10,18 +10,15 @@
 
 ## Step 1. Install this Module
 
-Add this to your requirements.txt and install. 
-
-```
-git+https://github.com/denisecase/text-alert.git
-```
+Use `pip install dc-texter`
+or add `dc-texter` to your requirements.txt and install. 
 
 ## Step 2. Add .env.toml To your Python Project
 
 Create a new .env.toml file in your Python project (or add these entries).
 - Update the outgoing email address to your gmail address.
 - Update the sms address for texts to your number, using your carrier's gateway (see .env.example.toml or do a search).
-- We'll create an app password later.  
+- We'll create an app password below.  
 
 ```
 # SMTP Email Configuration
@@ -36,7 +33,7 @@ sms_address_for_texts = "1112224444@msg.fi.google.com"
 
 ## Step 3. Add .env.toml To .gitignore
 
-Ensure your secrets are not published by adding an entry in .gitignore:
+Ensure your secrets are not published with an entry in .gitignore:
 
 ```
 .env.toml
@@ -88,37 +85,4 @@ Open the project repository in VS Code, open a PowerShell terminal and run
 ```
 pytest
 py dc_texter\texter.py
-```
-
-## A Note on Organization
-
-pip requires a folder/package to install. 
-
-Repository Name: text-alert
-  - Uses dashes (-) as allowed in GitHub repository names.
-  - Cannot be used as a Python package name due to dashes.
-  - Has no effect on Python package imports.
-
-Package (Folder) Name: dc_texter
-  - Uses underscores (_) to ensure compatibility with Python imports.
-  - Becomes an installable package when  __init__.py file is added.
-
-File Name: texter.py
-  - The file name with a .py extension.
-  - Can be executed as a script. 
-  - We avoid using the file name in imports if we set up __init__.py correctly. 
-
-pyproject.toml
-  - [project] name = "dc_texter"`
-  - Used for installation (`pip install dc_texter`).
-  - The package folder should match.
-
-```toml
-[project]
-name = "dc_texter" # install name
-
-version = "0.1.0"
-
-[tool.setuptools]
-packages = ["dc_texter"] # list of package folders
 ```

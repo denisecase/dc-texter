@@ -91,5 +91,8 @@ pytest
 # SENDING ALERTS WITH GOOGLE GMAIL
 # ======================================================
 
-# uncomment this line to install the package from GitHub
-#git+https://github.com/denisecase/text-alert.git
+# Uncomment this line to install the package from PyPI
+#dc-mailer
+
+# OR uncomment this line to install the package from GitHub
+#git+https://github.com/denisecase/dc-mailer.git
