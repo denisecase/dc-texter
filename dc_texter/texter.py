@@ -7,6 +7,7 @@ Updated: 2025-02-02
 
 """
 
+import os
 import logging
 import smtplib
 import tomllib
@@ -20,19 +21,78 @@ logging.basicConfig(
 
 
 def load_config(config_file: str = None):
-    """Load SMS gateway settings from a TOML config file."""
-    config_path = Path(config_file or ".env.toml").resolve()
+    """
+    Load settings from environment variables or a .env.toml file.
 
-    if not config_path.exists():
-        logging.error(f"Config file {config_path} not found.")
-        raise RuntimeError(f"Missing configuration file: {config_path}")
+    Prioritizes:
+    1. Environment variables.
+    2. User-specified absolute `config_file` (if provided).
+    3. `.env.toml` located in the package install directory.
+    4. `.env.toml` in the current working directory.
+    5. Raises a `RuntimeError` if no valid config is found.
+    """
 
-    try:
-        with config_path.open("rb") as file:
-            return tomllib.load(file)
-    except Exception as e:
-        logging.error(f"Error loading config file {config_path}: {e}")
-        raise RuntimeError("Failed to load configuration file.")
+    # Define the mapping between config keys and environment variable names
+    env_var_mapping = {
+        "outgoing_email_host": "OUTGOING_EMAIL_HOST",
+        "outgoing_email_port": "OUTGOING_EMAIL_PORT",
+        "outgoing_email_address": "OUTGOING_EMAIL_ADDRESS",
+        "outgoing_email_password": "OUTGOING_EMAIL_PASSWORD",
+        "sms_address_for_texts": "SMS_ADDRESS_FOR_TEXTS",
+    }
+
+    # Initialize the config dictionary
+    config = {}
+
+    # Check environment variables first
+    for key, env_var in env_var_mapping.items():
+        value = os.getenv(env_var)
+        if value is not None:
+            config[key] = value
+
+    # If all required configs are found in environment variables, return the config
+    if len(config) == len(env_var_mapping):
+        return config
+
+    # If not all configs are found in environment variables, proceed to check files
+    possible_paths = []
+
+    if config_file:
+        user_provided_path = Path(config_file).expanduser().resolve()
+        possible_paths.append(user_provided_path)
+
+    script_dir = Path(__file__).resolve().parent
+    package_path = script_dir / ".env.toml"
+    possible_paths.append(package_path)
+
+    cwd_path = Path.cwd() / ".env.toml"
+    possible_paths.append(cwd_path)
+
+    for config_path in possible_paths:
+        if config_path.exists():
+            try:
+                with config_path.open("rb") as file:
+                    file_config = tomllib.load(file)
+                    # Update the config dictionary with values from the file
+                    for key in env_var_mapping.keys():
+                        if key not in config and key in file_config:
+                            config[key] = file_config[key]
+                # After loading from file, check if all configs are present
+                if len(config) == len(env_var_mapping):
+                    return config
+                else:
+                    missing_keys = set(env_var_mapping.keys()) - set(config.keys())
+                    logging.error(f"Missing configuration keys: {missing_keys}")
+                    raise RuntimeError("Incomplete configuration.")
+            except Exception as e:
+                logging.error(f"Error loading config file {config_path}: {e}")
+                raise RuntimeError("Failed to load configuration file.")
+
+    # If no valid config is found, raise an error
+    logging.error(
+        f"Config file not found in any of the attempted locations: {possible_paths}"
+    )
+    raise RuntimeError("Missing configuration file. Check .env.toml location.")
 
 
 def send_text(body: str, recipient: str = None, config_file: str = None) -> None:
@@ -80,7 +140,7 @@ def send_text(body: str, recipient: str = None, config_file: str = None) -> None
             logging.info(f"Logged in as {sender_email}. Sending text message...")
 
             server.send_message(msg)
-            logging.info("Text message sent successfully.")
+            logging.info("Text message sent.")
 
     except smtplib.SMTPAuthenticationError:
         logging.error("SMTP authentication failed: Invalid username/password.")
@@ -97,7 +157,7 @@ def send_text(body: str, recipient: str = None, config_file: str = None) -> None
 
 
 if __name__ == "__main__":
-    logging.info("Starting emailer.py")
+    logging.info("Ready for work.")
     smileyface = "\U0001F600"
     try:
         message = "You can send notifications from Python programs." + smileyface

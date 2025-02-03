@@ -1,5 +1,15 @@
 # DEV NOTES
 
+## How to Run
+
+To run this file locally for testing, fork & clone the repo, add .env.toml. 
+Open the project repository in VS Code, open a PowerShell terminal and run 
+
+```
+pytest
+py dc_texter\texter.py
+```
+
 ## A Note on Organization
 
 pip requires a folder/package to install. 
@@ -49,12 +59,12 @@ In GitHub, go to repo / settings / secrets / actions and make a new secret named
 - update pyproject.toml to new version, e.g., v0.1.1
 - if didn't succeed, remove locally and remote first
 ```
-git tag -d v0.1.2
-git push origin --delete v0.1.2
+git tag -d v0.1.3
+git push origin --delete v0.1.3
 
 git add .
-git commit -m "v0.1.2"
-git tag -a v0.1.1 -m "Release v0.1.2"
+git commit -m "v0.1.3"
+git tag -a v0.1.3 -m "Release v0.1.3"
 git push origin main
-git push origin v0.1.2
+git push origin v0.1.3
 ```

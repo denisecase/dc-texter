@@ -86,13 +86,3 @@ twine # uploads distributions to PyPI (or GitHub Packages).
 
 # Running tests
 pytest
-
-# ======================================================
-# SENDING ALERTS WITH GOOGLE GMAIL
-# ======================================================
-
-# Uncomment this line to install the package from PyPI
-#dc-mailer
-
-# OR uncomment this line to install the package from GitHub
-#git+https://github.com/denisecase/dc-mailer.git
