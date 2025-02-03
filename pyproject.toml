@@ -11,9 +11,12 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+dev = ["pytest", "twine", "build"]
+
 [tool.setuptools]
 packages = ["dc_etexter"] # list of package folders
 
 [project.urls]
-"Homepage" = "https://github.com/denisecase/text-alert"
-"Repository" = "https://github.com/denisecase/text-alert"
+Homepage = "https://github.com/denisecase/text-alert"
+Repository = "https://github.com/denisecase/text-alert"
