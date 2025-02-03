@@ -35,4 +35,4 @@ jobs:
         env:
           TWINE_USERNAME: ${{ github.actor }}
           TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: twine upload --repository-url https://upload.github.com/denisecase/text-alert/ dist/*
+        run: twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
