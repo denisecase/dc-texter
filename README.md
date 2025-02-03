@@ -1,6 +1,6 @@
 # text-alert
 
-> Send an SMS text alert using Python
+> Send an SMS text alert using Python and Gmail
 
 ## Requirements
 
@@ -68,7 +68,7 @@ If your account has 2FA enabled, you must generate an App Password:
 Once installed and your .env.toml file is ready, you can use it in your code. 
 
 ```python
-from dc_etexter import send_text
+from dc_texter import send_text
 
 message = "Testing text alerts from Python."
 
@@ -87,7 +87,7 @@ Open the project repository in VS Code, open a PowerShell terminal and run
 
 ```
 pytest
-py dc_etexter\etexter.py
+py dc_texter\texter.py
 ```
 
 ## A Note on Organization
@@ -99,26 +99,26 @@ Repository Name: text-alert
   - Cannot be used as a Python package name due to dashes.
   - Has no effect on Python package imports.
 
-Package (Folder) Name: dc_etexter
+Package (Folder) Name: dc_texter
   - Uses underscores (_) to ensure compatibility with Python imports.
   - Becomes an installable package when  __init__.py file is added.
 
-File Name: etexter.py
+File Name: texter.py
   - The file name with a .py extension.
   - Can be executed as a script. 
   - We avoid using the file name in imports if we set up __init__.py correctly. 
 
 pyproject.toml
-  - [project] name = "dc_etexter"`
-  - Used for installation (`pip install dc_etexter`).
+  - [project] name = "dc_texter"`
+  - Used for installation (`pip install dc_texter`).
   - The package folder should match.
 
 ```toml
 [project]
-name = "dc_etexter" # install name
+name = "dc_texter" # install name
 
 version = "0.1.0"
 
 [tool.setuptools]
-packages = ["dc_etexter"] # list of package folders
+packages = ["dc_texter"] # list of package folders
 ```

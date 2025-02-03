@@ -1,5 +1,5 @@
 import pytest
-from dc_etexter.etexter import send_text
+from dc_texter.texter import send_text
 
 def test_send_text():
     """Test the send_text function."""
