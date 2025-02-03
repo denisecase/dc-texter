@@ -28,5 +28,4 @@ packages = ["dc_etexter"] # list of package folders
 [project.urls]
 Homepage = "https://github.com/denisecase/text-alert"
 Repository = "https://github.com/denisecase/text-alert"
-Bug Tracker = "https://github.com/denisecase/text-alert/issues"
-
+BugTracker = "https://github.com/denisecase/text-alert/issues"
