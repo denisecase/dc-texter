@@ -49,8 +49,8 @@ In GitHub, go to repo / settings / secrets / actions and make a new secret named
 - update pyproject.toml to new version, e.g., v0.1.1
 - if didn't succeed, remove locally and remote first
 ```
-git tag -d v0.1.1
-git push origin --delete v0.1.1
+git tag -d v0.1.2
+git push origin --delete v0.1.2
 
 git add .
 git commit -m "v0.1.2"
