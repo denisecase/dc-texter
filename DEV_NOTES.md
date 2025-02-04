@@ -16,6 +16,11 @@ pytest
 py -m dc_texter.texter
 ```
 
+## Relative Imports
+
+Relative imports will work locally but fail when imported.
+
+
 ## A Note on Organization
 
 pip requires a folder/package to install. 
@@ -65,15 +70,15 @@ In GitHub, go to repo / settings / secrets / actions and make a new secret named
 - update pyproject.toml to new version
 - if didn't succeed, remove locally and remote first
 ```
-git tag -d v0.1.4
-git push origin --delete v0.1.4
+git tag -d v0.1.5
+git push origin --delete v0.1.5
 ```
 
 To publish:
 ```
 git add .
-git commit -m "v0.1.4"
-git tag -a v0.1.4 -m "Release v0.1.4"
+git commit -m "v0.1.5"
+git tag -a v0.1.5 -m "Release v0.1.5"
 git push origin main
-git push origin v0.1.4
+git push origin v0.1.5
 ```

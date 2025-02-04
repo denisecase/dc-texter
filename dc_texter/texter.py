@@ -6,7 +6,7 @@ Send an SMS text with Python and Gmail.
 import logging
 import smtplib
 from email.message import EmailMessage
-from .config import load_config
+from dc_texter.config import load_config
 
 
 logging.basicConfig(
