@@ -1,13 +1,20 @@
 """
-tests/test_texter.py
-Tests sending an SMS text with Python and Gmail.
+tests/test_config.py
+Tests for retrieving configuration variables for texting via Gmail.
 """
 
-import os
+import pathlib
+import shutil
 import pytest
-from unittest.mock import patch, MagicMock
-from dc_texter.texter import send_text
-from dc_texter.config import load_config
+import os
+
+
+from dc_texter.config import (
+    load_config,
+    get_config_from_env,
+    load_config_from_file,
+    merge_configs,
+)
 
 # Sample TOML config as a string
 SAMPLE_TOML_CONFIG = """
@@ -19,24 +26,62 @@ sms_address_for_texts = "1234567890@example.com"
 """
 
 
+@pytest.fixture(scope="session", autouse=True)
+def backup_and_restore_env_file():
+    """
+    Before running tests:
+    - Rename `.env.toml` to `.env.toml.bak` (if it exists).
+
+    After tests finish:
+    - Restore `.env.toml` back from `.env.toml.bak`.
+    """
+    env_file = pathlib.Path(".env.toml")
+    backup_file = pathlib.Path(".env.toml.bak")
+
+    # Backup `.env.toml` if it exists
+    if env_file.exists():
+        shutil.move(str(env_file), str(backup_file))
+
+    yield  # Run the tests
+
+    # Restore `.env.toml` after tests
+    if backup_file.exists():
+        shutil.move(str(backup_file), str(env_file))
+
+
 @pytest.fixture
 def temp_config_file(tmp_path):
-    """Creates a temporary .env.toml file for testing."""
+    """Create temporary .env.toml file for testing."""
     config_file = tmp_path / ".env.toml"
     config_file.write_text(SAMPLE_TOML_CONFIG)
     return config_file
 
 
-def test_no_env_no_file(monkeypatch):
+def test_no_env_no_file(monkeypatch, tmp_path):
     """Test when neither environment variables nor a file exist."""
-    for key in os.environ.keys():
+
+    # Remove ALL relevant ENV variables
+    for key in list(os.environ.keys()):
         if key.startswith("OUTGOING_") or key == "SMS_ADDRESS_FOR_TEXTS":
             monkeypatch.delenv(key, raising=False)
+
+    original_exists = pathlib.Path.exists
+
+    def mock_path_exists(path):
+        if ".env.toml" in str(path):
+            return False
+        return original_exists(path)
+
+    monkeypatch.setattr(pathlib.Path, "exists", mock_path_exists)
+
+    # Use an empty temp directory as config path
+    temp_config_path = tmp_path / ".env.toml"
+    assert not temp_config_path.exists()
 
     with pytest.raises(
         RuntimeError, match="Please provide required configuration variables."
     ):
-        load_config()
+        load_config(config_file=str(temp_config_path))
 
 
 def test_env_vars_only(monkeypatch):
@@ -48,6 +93,7 @@ def test_env_vars_only(monkeypatch):
     monkeypatch.setenv("SMS_ADDRESS_FOR_TEXTS", "envsms@example.com")
 
     config = load_config()
+
     assert config["outgoing_email_host"] == "smtp.env.com"
     assert config["outgoing_email_port"] == "465"
     assert config["outgoing_email_address"] == "env_user@example.com"
@@ -62,6 +108,7 @@ def test_file_only(temp_config_file, monkeypatch):
             monkeypatch.delenv(key, raising=False)
 
     config = load_config(config_file=str(temp_config_file))
+
     assert config["outgoing_email_host"] == "smtp.example.com"
     assert config["outgoing_email_port"] == "587"
     assert config["outgoing_email_address"] == "user@example.com"
@@ -70,8 +117,8 @@ def test_file_only(temp_config_file, monkeypatch):
 
 
 def test_both_env_and_file(temp_config_file, monkeypatch):
-    """Test when both environment variables and a file exist, env vars take priority."""
-    # Set environment variables that should override file values
+    """Test when both environment variables and a file exist, ENV vars take priority."""
+    # Set environment variables that should OVERRIDE file values
     monkeypatch.setenv("OUTGOING_EMAIL_HOST", "smtp.override.com")
     monkeypatch.setenv("OUTGOING_EMAIL_PORT", "2525")
     monkeypatch.setenv("OUTGOING_EMAIL_ADDRESS", "override_user@example.com")
@@ -88,58 +135,41 @@ def test_both_env_and_file(temp_config_file, monkeypatch):
     assert config["sms_address_for_texts"] == "overridesms@example.com"
 
 
-@pytest.mark.parametrize(
-    "message, recipient, port",
-    [
-        ("Test message 1", "1234567890@example.com", 465),  # SMTP_SSL expected
-        (
-            "Hello, this is a test!",
-            "9876543210@example.com",
-            587,
-        ),  # SMTP with TLS expected
-        (
-            "Text alert from your Python program",
-            "testing@example.com",
-            2525,
-        ),  # Uncommon port
-    ],
-)
-def test_send_text_mocked(message, recipient, port, monkeypatch):
-    """Test send_text() with mocked SMTP client."""
+def test_merge_configs():
+    """Test merging ENV and file configurations, ensuring ENV takes priority."""
+    env_config = {
+        "outgoing_email_host": "smtp.env.com",
+        "outgoing_email_port": "465",
+    }
+    file_config = {
+        "outgoing_email_host": "smtp.file.com",
+        "outgoing_email_port": "587",
+        "outgoing_email_address": "file_user@example.com",
+    }
 
-    monkeypatch.setenv("OUTGOING_EMAIL_HOST", "smtp.example.com")
-    monkeypatch.setenv("OUTGOING_EMAIL_PORT", str(port))  # Ensure correct port
-    monkeypatch.setenv("OUTGOING_EMAIL_ADDRESS", "user@example.com")
-    monkeypatch.setenv("OUTGOING_EMAIL_PASSWORD", "securepassword")
-    monkeypatch.setenv("SMS_ADDRESS_FOR_TEXTS", recipient)
+    merged_config = merge_configs(env_config, file_config)
 
-    with (
-        patch("dc_texter.texter.smtplib.SMTP") as mock_smtp,
-        patch("dc_texter.texter.smtplib.SMTP_SSL") as mock_smtp_ssl,
-    ):
+    # ENV should override file values
+    assert merged_config["outgoing_email_host"] == "smtp.env.com"
+    assert merged_config["outgoing_email_port"] == "465"
 
-        # Mock correct SMTP class based on port
-        mock_server = MagicMock()
-        if port == 465:
-            mock_smtp_ssl.return_value.__enter__.return_value = mock_server
-        else:
-            mock_smtp.return_value.__enter__.return_value = mock_server
+    # File should provide values not present in ENV
+    assert merged_config["outgoing_email_address"] == "file_user@example.com"
 
-        # Simulate successful SMTP interactions
-        mock_server.login.return_value = True
-        mock_server.send_message.return_value = None
 
-        try:
-            send_text(body=message, recipient=recipient)
+def test_get_config_from_env(monkeypatch):
+    """Test retrieving config from environment variables."""
+    monkeypatch.setenv("OUTGOING_EMAIL_HOST", "smtp.env.com")
+    monkeypatch.setenv("OUTGOING_EMAIL_PORT", "465")
 
-            # Ensure correct SMTP class is used
-            if port == 465:
-                mock_smtp_ssl.assert_called_once()
-            else:
-                mock_smtp.assert_called_once()
+    config = get_config_from_env()
+    assert config["outgoing_email_host"] == "smtp.env.com"
+    assert config["outgoing_email_port"] == "465"
 
-            mock_server.login.assert_called_once()
-            mock_server.send_message.assert_called_once()
 
-        except Exception as e:
-            pytest.fail(f"send_text() raised an exception: {e}")
+def test_load_config_from_file(temp_config_file):
+    """Test loading config from a TOML file."""
+    config = load_config_from_file(temp_config_file)
+
+    assert config["outgoing_email_host"] == "smtp.example.com"
+    assert config["outgoing_email_port"] == "587"
