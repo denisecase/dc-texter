@@ -21,6 +21,7 @@ jobs:
       - name: Install Dependencies
         run: |
           python3 -m pip install --upgrade pip setuptools wheel build twine
+          python3 -m pip install .[dev]
 
       - name: Run Tests
         run: pytest tests/
@@ -35,4 +36,3 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: twine upload dist/*
         if: success()
-        
